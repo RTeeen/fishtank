@@ -4,14 +4,14 @@ const PHYSICS_TICK_SIZE_S = 0.010;      // Lyme disease is gross.  Measured in s
 
 class Denizen {
   constructor(options) {
-    console.log("constructing:", this.constructor.name, options);
+    // console.log("constructing:", this.constructor.name, options);
     this.last_time = new Date();
     this.height = 60;
     this.width = 60;
     this.position = options.position;
     if (options.tank) {
       this.tank = options.tank;
-      this.tank.registerDenizen(this);
+      this.id = this.tank.registerDenizen(this);
     }
     this.onClick = this.onClick.bind(this);
   }
@@ -20,22 +20,19 @@ class Denizen {
     var delta_t = (new_time - this.last_time) / 1000.0; // convert to seconds
     var n_ticks = Math.floor(delta_t / PHYSICS_TICK_SIZE_S);
     var seconds_consumed = n_ticks * PHYSICS_TICK_SIZE_S;
-
 //    console.log(this.last_time.getSeconds(), this.last_time.getMilliseconds(), "...", new_time.getSeconds(), new_time.getMilliseconds(), 
 //        "-->", n_ticks, "ticks,   ", seconds_consumed, "time consumed");
-
     this.last_time = new Date(this.last_time.getTime() + seconds_consumed * 1000);
     return n_ticks;
   }
 
   update(t) {
-    // TODO: put bounds on location: if you're way out of bounds, despawn
-
-
-    var n_ticks = this.calc_physics_ticks(t);
-    for (var i = 0; i < n_ticks; i++) {
-      console.log("updating", this.constructor.name);
-      this.update_one_tick();
+    if (this.outOfBounds(this.tank.getBounds())) { // if you're out of bounds, despawn
+      this.die();
+    } else {
+      for (var i = 0; i < this.calc_physics_ticks(t); i++) {
+        this.update_one_tick();
+      }
     }
   }
 
@@ -58,6 +55,20 @@ class Denizen {
   onClick(event) {
     throw "not implemented";
   }
+
+  die() {
+    // console.log("like tears, in rain.  time to die.", this);
+    this.tank.removeDenizen(this.id);
+  }
+
+  outOfBounds(bounds) {
+    return (
+      this.position[0] + this.width < bounds.min_x ||
+      this.position[0] - this.width > bounds.max_x ||
+      this.position[1] + this.height < bounds.min_y ||
+      this.position[1] - this.height > bounds.max_y         // TODO: seeds should be able to go above the tank and then fall back in
+    );
+  }
 }
 
 
@@ -70,10 +81,11 @@ class Fish extends Denizen {
     this.swimVelocity = this.generateSwimVelocity(this.maxSwimSpeed);
     this.hype = 1;
     this.maxHype = 3;
+    this.timeUntilSpeedChange = randRangeInt(5);
   }
 
   generateSwimVelocity(max) {
-    return [randRangeInt(-max, max), randRangeInt(-max, max)];
+    return [randRangeInt(-max, max), randRangeInt(-max / 2, max / 2)];
   }
 
   update_one_tick() {
@@ -81,7 +93,40 @@ class Fish extends Denizen {
     var dy = this.swimVelocity[1] * PHYSICS_TICK_SIZE_S;
     this.position[0] += dx;
     this.position[1] += dy;
+    this.timeUntilSpeedChange -= PHYSICS_TICK_SIZE_S;
+    if (this.timeUntilSpeedChange < 0) {
+      this.swimVelocity = this.generateSwimVelocity(this.maxSwimSpeed);
+      this.timeUntilSpeedChange = randRangeInt(5);
+    }
+  }
 
+  onClick(event) {
+    this.timeUntilSpeedChange = 0;
+  }
+}
+
+class GoFish extends Fish {
+  constructor(options) {
+    super(options);
+    this.surgeSecondsLeft = 0;
+    this.maxSurge = 2.5;
+  }
+
+  update_one_tick() {
+    var dx = this.swimVelocity[0] * PHYSICS_TICK_SIZE_S;
+    var dy = this.swimVelocity[1] * PHYSICS_TICK_SIZE_S;
+    this.position[0] += dx * (1 + this.surgeSecondsLeft);
+    this.position[1] += dy * (1 + this.surgeSecondsLeft);
+    this.surgeSecondsLeft = Math.max(0, this.surgeSecondsLeft - PHYSICS_TICK_SIZE_S);
+    this.timeUntilSpeedChange -= PHYSICS_TICK_SIZE_S;
+    if (this.timeUntilSpeedChange < 0) {
+      this.swimVelocity = this.generateSwimVelocity(this.maxSwimSpeed);
+      this.timeUntilSpeedChange = randRangeInt(5);
+    }
+  }
+
+  onClick(event) {
+    this.surgeSecondsLeft = this.maxSurge;
   }
 }
 
@@ -105,13 +150,20 @@ class Starter extends Plant {
   }
 
   onClick(event) {
+    var x_vel = randRangeInt(-300, 300);
+    var y_vel = 500 - Math.abs(x_vel);
     var s = new Seed({
-      velocity: [200, 200],
+      velocity: [x_vel, y_vel],
       tank: this.tank,
       position: this.position.slice(),
+      type: this.tank.getRandomSpecies(),
     });
   }
 }
+
+class RandomSpeciesIsFailingFish extends Fish {
+}
+
 
 class Seed extends Denizen {
   constructor(options) {
@@ -121,10 +173,13 @@ class Seed extends Denizen {
     this.vel_y = options.velocity[1];
     this.imageUri = '/images/seed.png';
     this.position = options.position;
+    this.onClick = this.onClick.bind(this);
+    this.type = options.type;
+    this.height = 30;
+    this.width = 30;
   }
 
   update_one_tick() {
-    console.log("seed u1t");
     this.vel_x *= 1 - (this.water_friction * PHYSICS_TICK_SIZE_S);
     this.vel_y *= 1 - (this.water_friction * PHYSICS_TICK_SIZE_S);
     this.vel_y -= 50 * PHYSICS_TICK_SIZE_S;
@@ -133,6 +188,19 @@ class Seed extends Denizen {
     var dy = this.vel_y * PHYSICS_TICK_SIZE_S;
     this.position[0] += dx;
     this.position[1] += dy;
+  }
+
+  spawn() {
+    var Type = this.type;
+    var individual = new Type({
+      tank: this.tank,
+      position: this.position.slice(),
+    });
+  }
+
+  onClick(event) {
+    this.spawn();
+    this.die();
   }
 
 }

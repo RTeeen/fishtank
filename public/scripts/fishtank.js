@@ -5,17 +5,19 @@ class Fishtank {
     this.denizens = {};
     this.specieses = {};
     this.drawing = true;
-    this.drawGraphicsBound = this.drawGraphics.bind(this);    // ahahaha, welcome to this hell
+    this.drawGraphicsBound = this.drawGraphics.bind(this);    // ahahaha, welcome to `this` hell.  callback hell never had it so fiery.
     requestAnimationFrame(this.drawGraphicsBound);
   }
 
-  registerSpecies(species) {
-    this.specieses[species.name] = species;
+  registerSpecies() {
+    for (var species of arguments) {
+      this.specieses[species.name] = species;
+    }
   }
 
   getRandomSpecies() {
     var specieses = Object.values(this.specieses);
-    var index = randRangeInt(specieses.length);
+    var index = randRangeInt(specieses.length - 1);
     return specieses[index];
   }
 
@@ -26,6 +28,19 @@ class Fishtank {
     }
     this.denizens[id] = individual;
     return id;
+  }
+
+  removeDenizen(id) {
+    delete (this.denizens[id]);
+    var $victim = $('#' + id);
+    $victim.off();
+    $victim.css({ transition: 'all 2s' });
+    $victim.css({ 
+      opacity: '0',
+      width: $victim.width() * 2,
+      height: $victim.height() * 2,
+    });
+    setTimeout(() => $victim.remove(), 3000);
   }
 
   runPhysics(time) {
@@ -82,6 +97,15 @@ class Fishtank {
     if (this.drawing) {
       requestAnimationFrame(this.drawGraphicsBound);
     }
+  }
+
+  getBounds() {
+    return {
+      min_x: - window.innerWidth / 2,
+      max_x: window.innerWidth / 2,
+      min_y: -10,
+      max_y: window.innerHeight - 10,
+    };
   }
 
 }
