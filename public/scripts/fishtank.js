@@ -51,6 +51,7 @@ class Fishtank {
   }
 
   drawGraphics() {
+    this.runPhysics();  // TODO: maybe this should be on a separate setInterval
     var $fishtank = $('#' + this.divName);
     var center_x = Math.floor(window.innerWidth / 2);
     var floor_y = Math.floor(window.innerHeight * 0.95);
