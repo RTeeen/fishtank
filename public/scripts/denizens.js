@@ -151,7 +151,7 @@ class Starter extends Plant {
 
   onClick(event) {
     var x_vel = randRangeInt(-300, 300);
-    var y_vel = 500 - Math.abs(x_vel);
+    var y_vel = 400 - Math.abs(x_vel);
     var s = new Seed({
       velocity: [x_vel, y_vel],
       tank: this.tank,
@@ -160,10 +160,6 @@ class Starter extends Plant {
     });
   }
 }
-
-class RandomSpeciesIsFailingFish extends Fish {
-}
-
 
 class Seed extends Denizen {
   constructor(options) {
