@@ -30,15 +30,25 @@ class Fishtank {
     return id;
   }
 
-  removeDenizen(id) {
+  getProximateDenizens(center, radius) {
+    function isNearCenter(individual) {
+      return individual.position.distance(center) <= radius;
+      //return distance(individual.position, center) <= radius;
+    }
+    return Object.values(this.denizens).filter(isNearCenter);
+  }
+
+  removeDenizen(id, duration) {
     delete (this.denizens[id]);
+    duration = duration || 1;
+    duration = Number(duration) + 's';
     var $victim = $('#' + id);
     $victim.off();
-    $victim.css({ transition: 'all 2s' });
+    $victim.css({ transition: 'all ' + duration });
     $victim.css({ 
       opacity: '0',
-      width: $victim.width() * 2,
-      height: $victim.height() * 2,
+      width: $victim.width() * 3,
+      height: $victim.height() * 3,
     });
     setTimeout(() => $victim.remove(), 3000);
   }
