@@ -6,8 +6,7 @@ function randRange(min, max) {
 
 function randRangeInt(min, max) {
   if (max === undefined) {
-    max = min;
-    min = 0;
+    [min, max] = [0, min];
   }
   return Math.floor(randRange(min, max + 0.99999));
 }
