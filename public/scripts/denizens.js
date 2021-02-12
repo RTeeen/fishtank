@@ -4,7 +4,6 @@ const PHYSICS_TICK_SIZE_S = 0.010;      // Lyme disease is gross.  Measured in s
 
 class Denizen {
   constructor(options) {
-    // console.log("constructing:", this.constructor.name, options);
     this.last_time = new Date();
     this.height = 60;
     this.width = 60;
@@ -20,8 +19,6 @@ class Denizen {
     var delta_t = (new_time - this.last_time) / 1000.0; // convert to seconds
     var n_ticks = Math.floor(delta_t / PHYSICS_TICK_SIZE_S);
     var seconds_consumed = n_ticks * PHYSICS_TICK_SIZE_S;
-//    console.log(this.last_time.getSeconds(), this.last_time.getMilliseconds(), "...", new_time.getSeconds(), new_time.getMilliseconds(), 
-//        "-->", n_ticks, "ticks,   ", seconds_consumed, "time consumed");
     this.last_time = new Date(this.last_time.getTime() + seconds_consumed * 1000);
     return n_ticks;
   }
@@ -57,7 +54,6 @@ class Denizen {
   }
 
   die() {
-    // console.log("like tears, in rain.  time to die.", this);
     this.tank.removeDenizen(this.id);
   }
 
@@ -66,7 +62,7 @@ class Denizen {
       this.position[0] + this.width < bounds.min_x ||
       this.position[0] - this.width > bounds.max_x ||
       this.position[1] + this.height < bounds.min_y ||
-      this.position[1] - this.height > bounds.max_y         // TODO: seeds should be able to go above the tank and then fall back in
+      this.position[1] - this.height > (bounds.max_y * 1.2)
     );
   }
 }
@@ -77,7 +73,6 @@ class Fish extends Denizen {
     super(options);
     this.imageUri = '/images/fish01.png';
     this.maxSwimSpeed = 100;
-    this.minSwimSpeed = 20;   // unused
     this.swimVelocity = this.generateSwimVelocity(this.maxSwimSpeed);
     this.hype = 1;
     this.maxHype = 3;
