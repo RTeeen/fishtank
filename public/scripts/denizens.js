@@ -138,7 +138,7 @@ class Plant extends Denizen {
 }
 
 
-class Starter extends Plant {
+class Volcano extends Plant {
   constructor(options) {
     super(options);
     this.imageUri = '/images/volcano.jpg';
@@ -146,7 +146,7 @@ class Starter extends Plant {
   }
 
   update(t) {
-    // no physics for Starter
+    // no physics for Volcano
   }
 
   onClick(event) {
