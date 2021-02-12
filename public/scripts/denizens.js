@@ -162,7 +162,10 @@ class BiteFish extends GoFish {
 }
 
 
-class Starter extends Denizen {
+
+
+class Volcano extends Plant {
+
   constructor(options) {
     super(options);
     this.imageUri = '/images/volcano.jpg';
@@ -170,7 +173,7 @@ class Starter extends Denizen {
   }
 
   update(t) {
-    // no physics for Starter
+    // no physics for Volcano
   }
 
   onClick(event) {
